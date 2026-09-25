@@ -28,17 +28,28 @@ void Instancia::carregarDeFicheiro(const std::string& caminhoArquivo){
     }
     arquivo.close();
 }
-std::string Instancia::formataNome(char* argv[]){
-    std::filesystem::path caminhoUsuario(argv[1]);
-    std::filesystem::path caminhoDesejado = "/Documentos/otimizacaoEmPivosCentrais/instancias";
+void Instancia::imprimeInst(){
+    std::cout<<"Num pivos: "<<nPivos<<"\nLimite de água: "<<limiteAguaHora<<"Num horas: "<<nHorasHorizonte;
+    for(int i = 0; i < nPivos;i++){
+        std::cout<<"\nAgua/h: "<<pivos[i].aguaPhora<<"\nPotencia: "<<pivos[i].potenciaKw<<"\nHoras Nesc: "<<pivos[i].horasNecessarias;
+    }
+    std::cout<<"\nCutoEC/h: ";
+    for(int i = 0; i < nHorasHorizonte;i++)
+        std::cout<<custoEnergiaHora[i];
+}
+std::string Instancia::formataNome(const char* argv){
+    std::filesystem::path caminhoUsuario(argv);
+    std::filesystem::path caminhoDesejado = "instancias";
 
-    std::filesystem::path caminhoAbsoluto = caminhoDesejado / caminhoUsuario;
+    std::filesystem::path caminhoAbsoluto = caminhoDesejado/caminhoUsuario;
     if(std::filesystem::exists(caminhoAbsoluto)){
         return caminhoAbsoluto.string();
     }
-    std::cout<<"O Arquivo"<<caminhoUsuario.string()<<"não existe no diretório: "<<caminhoDesejado.string();
+    std::cout<<"O Arquivo  "<<caminhoUsuario.string()<<" não existe no diretório: "<<caminhoDesejado.string();
     return "";
 }
+
+//GETERS
 int Instancia::getNPivos() const{
     return nPivos;
 }
@@ -48,10 +59,24 @@ double Instancia::getLimiteAguaHora() const{
 int Instancia::getNHorasHorizonte() const{
     return nHorasHorizonte;
 }
-const std::vector<double>& Instancia::getCustoEnergiaHora() const{}
-const std::vector<Pivo>& Instancia::getPivos() const{}
+const std::vector<double>& Instancia::getCustoEnergiaHora() const{
+    return this->custoEnergiaHora;
+}
+const std::vector<Pivo>& Instancia::getPivos() const{
+    return this->pivos;
+}
+int Instancia::getDemandaDoPivo(int t){
+    return this->pivos[t].horasNecessarias;
+}
+double Instancia::getGastoPivo(int i){
+    return this->pivos[i].aguaPhora;
+}
 
 double Instancia::getCustoEnergiaNaHora(int t) const{
-
+    if(t>nHorasHorizonte)
+        return 0.0;
+    return this->custoEnergiaHora[t];
 }
-double Instancia::getDemandaTotalAgua() const{}
+double Instancia::getDemandaTotalAgua() const{
+    return 0.0;
+}
