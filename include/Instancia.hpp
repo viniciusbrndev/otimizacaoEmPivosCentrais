@@ -13,6 +13,7 @@ typedef struct pivo
     int id;
     double aguaPhora;
     double potenciaKw;
+
     int horasNecessarias;
 }Pivo;
 
@@ -30,11 +31,16 @@ class Instancia{
         void carregarDeFicheiro(const std::string& caminhoArquivo);
     public:
         explicit Instancia(std::string& nomeArq);
-        std::string formataNome(char* argv[]);
+        void printPivo();
+        void imprimeInst();
+        static std::string formataNome(const char* argv);
         int getNPivos() const;
         double getLimiteAguaHora() const;
         int getNHorasHorizonte() const;
-        
+        int getDemandaDoPivo(int t);
+        double getGastoPivo(int i);
+
+
         const std::vector<double>& getCustoEnergiaHora() const;
         const std::vector<Pivo>& getPivos() const;
 
