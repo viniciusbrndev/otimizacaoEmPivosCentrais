@@ -1,4 +1,6 @@
 #include "../include/Instancia.hpp"
+#include "../include/Solucao.hpp"
+#include "../include/Construtor.hpp"
 #include "iostream"
 #include <string>
 
@@ -12,11 +14,14 @@ int main(int argc,char* argv[]){
         std::cout<<"Arquivo não econtrado";
         return 1;
     }
-    
+    //Instanciando objetos
     Instancia inst(caminho);
-
     inst.imprimeInst();
-
+    Construtor HeuristicaCon(&inst);
+    //Construindo uma solucao gulosa
+    Solucao SolPossivel = HeuristicaCon.solucaoGulosa();
+    
+    SolPossivel.print(inst);
 
     return 0;
 }

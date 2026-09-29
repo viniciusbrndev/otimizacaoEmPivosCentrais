@@ -37,8 +37,9 @@ class Instancia{
         int getNPivos() const;
         double getLimiteAguaHora() const;
         int getNHorasHorizonte() const;
-        int getDemandaDoPivo(int t);
-        double getGastoPivo(int i);
+        int getGastoECPivo(int t);
+        double getGastoWChoraPivo(int i);
+        int getDemandaHorasPivo(int t);
 
 
         const std::vector<double>& getCustoEnergiaHora() const;

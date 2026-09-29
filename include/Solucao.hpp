@@ -11,7 +11,7 @@ struct Solucao{
     bool viavel;
 
     // Construtor padrão
-    Solucao() : custoTotalEnergia(0.0), viavel(true) {}
+    Solucao() : custoTotalEnergia(0.0), viavel(true){}
 
     // Construtor que inicializa a matriz zerada com base na Instancia
     Solucao(const Instancia& inst) {
@@ -23,13 +23,23 @@ struct Solucao{
         viavel = true;
     }
 
-    // Método utilitário para zerar a solução mantendo o tamanho
-    void limpar() {
+    // Método utilitário 
+    void limpar(){
         for (auto& linha : ligacao) {
             std::fill(linha.begin(), linha.end(), 0);
         }
         custoTotalEnergia = 0.0;
         viavel = true;
+    }
+
+    void print(const Instancia& inst){
+        std::cout << std::endl<<"Eh viavel: "<<viavel<<std::endl<<"Custo Total de Energia: " << custoTotalEnergia << std::endl;
+        for(int i = 0; i < inst.getNPivos(); i++){
+            for(int j = 0; j < inst.getNHorasHorizonte(); j++){
+                std::cout << ligacao[i][j]<<" ";
+            }
+            std::cout << std::endl;
+        }
     }
 };
 

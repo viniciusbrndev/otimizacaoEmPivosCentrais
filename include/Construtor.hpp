@@ -17,8 +17,9 @@ class Construtor{
         bool validaSolucao(Solucao& sol);
         bool horasNecessaria(Solucao& sol);
         double calculaCustoEnergia(const Solucao& sol);
-        double calculaGastoHora(int t, Solucao& sol);
-        //Contrutores de Soluções
+        double calculaGastoWCHora(int t, Solucao& sol);
+
+        //Construtores de Soluções
         Solucao solucaoGulosa();
 
 };

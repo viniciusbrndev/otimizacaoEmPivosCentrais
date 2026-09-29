@@ -65,16 +65,22 @@ const std::vector<double>& Instancia::getCustoEnergiaHora() const{
 const std::vector<Pivo>& Instancia::getPivos() const{
     return this->pivos;
 }
-int Instancia::getDemandaDoPivo(int t){
-    return this->pivos[t].horasNecessarias;
+int Instancia::getDemandaHorasPivo(int t){
+    if(t < this->nPivos){
+        return this->pivos[t].horasNecessarias;
+    }
+    return -1;
 }
-double Instancia::getGastoPivo(int i){
+int Instancia::getGastoECPivo(int t){
+    return this->pivos[t].potenciaKw;
+}
+double Instancia::getGastoWChoraPivo(int i){
     return this->pivos[i].aguaPhora;
 }
 
 double Instancia::getCustoEnergiaNaHora(int t) const{
     if(t>nHorasHorizonte)
-        return 0.0;
+        return this->custoEnergiaHora[t];
     return this->custoEnergiaHora[t];
 }
 double Instancia::getDemandaTotalAgua() const{
