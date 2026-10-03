@@ -83,6 +83,3 @@ double Instancia::getCustoEnergiaNaHora(int t) const{
         return this->custoEnergiaHora[t];
     return this->custoEnergiaHora[t];
 }
-double Instancia::getDemandaTotalAgua() const{
-    return 0.0;
-}

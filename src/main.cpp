@@ -20,8 +20,12 @@ int main(int argc,char* argv[]){
     Construtor HeuristicaCon(&inst);
     //Construindo uma solucao gulosa
     Solucao SolPossivel = HeuristicaCon.solucaoGulosa();
-    
     SolPossivel.print(inst);
+    std::cout<<std::endl;
+
+    SolPossivel = HeuristicaCon.metodoDeRefinamento(SolPossivel);
+    SolPossivel.print(inst);
+    std::cout<<std::endl;
 
     return 0;
 }
