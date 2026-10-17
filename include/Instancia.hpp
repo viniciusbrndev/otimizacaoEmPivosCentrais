@@ -15,6 +15,12 @@ typedef struct pivo
     double potenciaKw;
 
     int horasNecessarias;
+
+    bool operator>(struct pivo& p2){
+        if(this->horasNecessarias > p2.horasNecessarias)
+            return true;
+        return false;
+    }
 }Pivo;
 
 
@@ -41,9 +47,8 @@ class Instancia{
         double getGastoWChoraPivo(int i);
         int getDemandaHorasPivo(int t);
 
-
         const std::vector<double>& getCustoEnergiaHora() const;
-        const std::vector<Pivo>& getPivos() const;
+        const std::vector<Pivo>& getPivos();
 
         // Métodos utilitários
         double getCustoEnergiaNaHora(int t) const;

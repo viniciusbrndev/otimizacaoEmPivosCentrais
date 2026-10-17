@@ -62,7 +62,7 @@ int Instancia::getNHorasHorizonte() const{
 const std::vector<double>& Instancia::getCustoEnergiaHora() const{
     return this->custoEnergiaHora;
 }
-const std::vector<Pivo>& Instancia::getPivos() const{
+const std::vector<Pivo>& Instancia::getPivos(){
     return this->pivos;
 }
 int Instancia::getDemandaHorasPivo(int t){

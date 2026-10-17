@@ -5,12 +5,14 @@
 #include <algorithm>
 
 #define MAX_ITERACOES 100
+#define PENALIDADE_AGUA 200
+#define PENALIDADE_DEMANDA 100
 
 Construtor::Construtor(Instancia* inst){
     this->inst = inst;
 }
 //Vertifica se o pivô teve sua demanda de horas ligado atingida
-bool Construtor::horasNecessaria(Solucao& sol){
+bool Construtor::horasNecessaria(Solucao& sol) const{
     int atendeuDemanda;
     for(int i = 0; i < this->inst->getNPivos(); i++){
         atendeuDemanda = this->inst->getDemandaHorasPivo(i);
@@ -24,6 +26,15 @@ bool Construtor::horasNecessaria(Solucao& sol){
     return true;
 }
 //Calcula a água gasta na hora (coluna da matriz)
+int Construtor::demandaRestantePivo(int pivo,const Solucao& so) const{
+    int atendeuDemanda = this->inst->getDemandaHorasPivo(pivo);
+    for(int j = 0; j < this->inst->getNHorasHorizonte(); j++){
+        if(so.ligacao[pivo][j])
+            atendeuDemanda--;
+    }
+
+    return atendeuDemanda;
+}
 double Construtor::calculaGastoAguaHora(int t, Solucao& sol){
     double soma = 0;
     for(int i = 0; i < this->inst->getNPivos();i++){
@@ -96,11 +107,12 @@ bool Construtor::randonSwap(int pivo, int t, Solucao& s){
     return true;
 }
 //método visa apenas alocar os horários respeitando o limite de água
-Solucao Construtor::solucaoGulosa(){
-    Solucao solPossivel(*inst);
+Solucao& Construtor::solucaoGulosa(){
+    static Solucao solPossivel(*inst);
     int n = this->inst->getNPivos();
     int h = this->inst->getNHorasHorizonte();
 
+    solPossivel = Solucao(*inst);
     std::vector<double> gastoDeAgua(h, 0.0);
     std::vector<int> demandaRestante(n);
     std::vector<std::pair<double, int>> horas(h);
@@ -132,6 +144,65 @@ Solucao Construtor::solucaoGulosa(){
     solPossivel.viavel = validaSolucao(solPossivel);
     return solPossivel;
 
+}
+double Construtor::calculaFO(const Solucao& s) const{
+    int n = this->inst->getNPivos();
+    int h = this->inst->getNHorasHorizonte();
+    double custoEnergiaTotal = s.custoTotalEnergia;
+    double gastoTotalDeAgua = 0.0;
+    double penalidadeTotal =  0.0;
+    for(int j = 0; j < h; j++){
+        double gastoAguaHora = 0.0;
+        
+        for(int i = 0; i < n; i++){
+            if(s.ligacao[i][j])
+                gastoAguaHora += this->inst->getGastoWChoraPivo(i);
+        }
+        gastoTotalDeAgua += gastoAguaHora;
+        double excesso = gastoAguaHora - inst->getLimiteAguaHora();
+        if(excesso){
+            penalidadeTotal += excesso*PENALIDADE_DEMANDA;
+        }
+    }
+    for(int i = 0; i < n; i++){
+        penalidadeTotal += demandaRestantePivo(i, s) * PENALIDADE_DEMANDA;
+    }
+
+    return custoEnergiaTotal + gastoTotalDeAgua + penalidadeTotal;
+} 
+Solucao Construtor::solucaoGulosaMelhorada(){
+    Solucao solPossivel(*inst);
+    
+    int n = this->inst->getNPivos();
+    int h = this->inst->getNHorasHorizonte();
+    std::vector<double> gastoHora(h, 0.0);
+    
+    std::vector<std::pair<int, int>> pivos(n);
+    for(int i = 0 ; i < n; i++){
+        pivos[i].first = i;
+        pivos[i].second = inst->getDemandaHorasPivo(i);
+    }
+    std::sort(pivos.begin(), pivos.end(), [](const auto& a, const auto& b){
+        return a.second > b.second;
+    });
+    for (int i = 0; i < n; i++) {
+        int pivoId = pivos[i].first;
+        int demandaRestante = pivos[i].second;
+        double gastoPivo = inst->getGastoWChoraPivo(pivoId);
+
+        for (int j = 0; j < h && demandaRestante > 0; j++) {
+            // Verifica se cabe o pivô na hora j sem estourar o limite de água
+            if (gastoHora[j] + gastoPivo <= inst->getLimiteAguaHora()) {
+                solPossivel.ligacao[pivoId][j] = 1;
+                gastoHora[j] += gastoPivo;
+                // Decrementa a demanda
+                demandaRestante--; 
+            }
+        }
+    }
+    solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel);
+    solPossivel.funcObjetivo = calculaFO(solPossivel);
+    return solPossivel;
 }
 
 Solucao Construtor::metodoDeRefinamento(Solucao& solucao){

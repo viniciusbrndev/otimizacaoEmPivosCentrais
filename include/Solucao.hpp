@@ -8,10 +8,11 @@ struct Solucao{
     std::vector<std::vector<int>> ligacao; 
     
     double custoTotalEnergia;
+    double funcObjetivo;
     bool viavel;
 
     // Construtor padrão
-    Solucao() : custoTotalEnergia(0.0), viavel(true){}
+    Solucao() : custoTotalEnergia(0.0), viavel(true), funcObjetivo(0.0){}
 
     // Construtor que inicializa a matriz zerada com base na Instancia
     Solucao(const Instancia& inst) {
@@ -21,6 +22,7 @@ struct Solucao{
         ligacao.assign(nPivos, std::vector<int>(nHoras, 0));
         custoTotalEnergia = 0.0;
         viavel = true;
+        funcObjetivo = 0.0;
     }
 
     // Método utilitário 

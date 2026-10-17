@@ -15,13 +15,18 @@ class Construtor{
         explicit Construtor(Instancia* inst);
         //auxiliares
         bool validaSolucao(Solucao& sol);
-        bool horasNecessaria(Solucao& sol);
+        bool horasNecessaria(Solucao& sol)const;
+        int demandaRestantePivo(int pivo, const Solucao& so)const;
         double calculaCustoEnergia(const Solucao& sol);
-        double calculaGastoWCHora(int t, Solucao& sol);
-
+        double calculaGastoAguaHora(int t, Solucao& sol);
+        static bool estourouVazao(double usoDeAguaHr, double vMax);
+        int randPos(int pivo, int horaAtual, const Solucao& sol);
+        bool randonSwap(int pivo, int t, Solucao& s);
+        double calculaFO(const Solucao& s) const;
         //Construtores de Soluções
-        Solucao solucaoGulosa();
-
+        Solucao& solucaoGulosa();
+        Solucao solucaoGulosaMelhorada();
+        Solucao metodoDeRefinamento(Solucao& solucao);
 };
 
 
