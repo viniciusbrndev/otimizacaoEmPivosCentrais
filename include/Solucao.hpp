@@ -6,7 +6,8 @@
 struct Solucao{
     // Matriz de decisão: ligacao[p][t] = 1 se o pivo p liga na hora t
     std::vector<std::vector<int>> ligacao; 
-    
+    std::vector<std::vector<int>> intervalo;
+
     double custoTotalEnergia;
     double funcObjetivo;
     bool viavel;
@@ -20,6 +21,8 @@ struct Solucao{
         int nHoras = inst.getNHorasHorizonte();
         
         ligacao.assign(nPivos, std::vector<int>(nHoras, 0));
+        intervalo.assign(nPivos, std::vector<int>(nHoras, 0));
+
         custoTotalEnergia = 0.0;
         viavel = true;
         funcObjetivo = 0.0;

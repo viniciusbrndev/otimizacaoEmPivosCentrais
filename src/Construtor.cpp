@@ -35,10 +35,10 @@ int Construtor::demandaRestantePivo(int pivo,const Solucao& so) const{
 
     return atendeuDemanda;
 }
-double Construtor::calculaGastoAguaHora(int t, Solucao& sol){
+double Construtor::calculaGastoAguaHora(int t, const std::vector<std::vector<int>>& mat)const{
     double soma = 0;
     for(int i = 0; i < this->inst->getNPivos();i++){
-        if(sol.ligacao[i][t])
+        if(mat[i][t])
             soma += this->inst->getGastoWChoraPivo(i);
     }
     return soma;
@@ -48,7 +48,7 @@ bool Construtor::validaSolucao(Solucao& sol){
     if(sol.viavel){
         double gastoAgua;
         for(int j = 0; j<this->inst->getNHorasHorizonte();j++){
-            gastoAgua = calculaGastoAguaHora(j,sol);
+            gastoAgua = calculaGastoAguaHora(j,sol.ligacao);
             if(gastoAgua > this->inst->getLimiteAguaHora())
                 sol.viavel = false;
         }
@@ -60,14 +60,14 @@ bool Construtor::estourouVazao(double usoDeAguaHr, double vMax){
         return true;
     return false;
 }
-double Construtor::calculaCustoEnergia(const Solucao& sol){
+double Construtor::calculaCustoEnergia(const std::vector<std::vector<int>>& mat)const{
     double soma = 0.0;
     int nHoras = inst->getNHorasHorizonte();
     int nPivos = inst->getNPivos();
 
     for (int i = 0; i < nPivos; i++) {
         for (int t = 0; t < nHoras; t++) {
-            soma += inst->getGastoECPivo(i) * inst->getCustoEnergiaNaHora(t) * sol.ligacao[i][t];
+            soma += inst->getGastoECPivo(i) * inst->getCustoEnergiaNaHora(t) * mat[i][t];
         }
     }
     return soma;
@@ -140,7 +140,7 @@ Solucao& Construtor::solucaoGulosa(){
             }
         }
     }
-    solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel);
+    solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel.ligacao);
     solPossivel.viavel = validaSolucao(solPossivel);
     return solPossivel;
 
@@ -149,26 +149,11 @@ double Construtor::calculaFO(const Solucao& s) const{
     int n = this->inst->getNPivos();
     int h = this->inst->getNHorasHorizonte();
     double custoEnergiaTotal = s.custoTotalEnergia;
+    double custoLigacoes = calculaCustoEnergia(s.intervalo);
     double gastoTotalDeAgua = 0.0;
-    double penalidadeTotal =  0.0;
-    for(int j = 0; j < h; j++){
-        double gastoAguaHora = 0.0;
-        
-        for(int i = 0; i < n; i++){
-            if(s.ligacao[i][j])
-                gastoAguaHora += this->inst->getGastoWChoraPivo(i);
-        }
-        gastoTotalDeAgua += gastoAguaHora;
-        double excesso = gastoAguaHora - inst->getLimiteAguaHora();
-        if(excesso){
-            penalidadeTotal += excesso*PENALIDADE_DEMANDA;
-        }
-    }
-    for(int i = 0; i < n; i++){
-        penalidadeTotal += demandaRestantePivo(i, s) * PENALIDADE_DEMANDA;
-    }
-
-    return custoEnergiaTotal + gastoTotalDeAgua + penalidadeTotal;
+    for(int t = 0; t < h; t++)
+        gastoTotalDeAgua+= calculaGastoAguaHora(t, s.ligacao);
+    return custoEnergiaTotal + custoLigacoes + gastoTotalDeAgua;
 } 
 Solucao Construtor::solucaoGulosaMelhorada(){
     Solucao solPossivel(*inst);
@@ -200,7 +185,7 @@ Solucao Construtor::solucaoGulosaMelhorada(){
             }
         }
     }
-    solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel);
+    solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel.ligacao);
     solPossivel.funcObjetivo = calculaFO(solPossivel);
     return solPossivel;
 }
@@ -213,7 +198,7 @@ Solucao Construtor::metodoDeRefinamento(Solucao& solucao){
 
     for (int i = 0; i < horas; i++) {
         solucaoAntiga = solucaoAtual;
-        double custoAntigo = calculaCustoEnergia(solucaoAntiga);
+        double custoAntigo = calculaCustoEnergia(solucaoAntiga.ligacao);
 
         bool melhorou = true;
         int iteracoes = 0;
@@ -230,8 +215,8 @@ Solucao Construtor::metodoDeRefinamento(Solucao& solucao){
                     continue;
                 }
 
-                double custoNovo = calculaCustoEnergia(solucaoNova);
-                double gastoNovo = calculaGastoAguaHora(i, solucaoNova);
+                double custoNovo = calculaCustoEnergia(solucaoNova.ligacao);
+                double gastoNovo = calculaGastoAguaHora(i, solucaoNova.ligacao);
 
                 if (custoNovo <= custoAntigo && !estourouVazao(gastoNovo, inst->getLimiteAguaHora()) && validaSolucao(solucaoNova)) {
                     solucaoAntiga = solucaoNova;
