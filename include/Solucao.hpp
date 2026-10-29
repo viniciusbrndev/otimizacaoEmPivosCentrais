@@ -28,20 +28,56 @@ struct Solucao{
         funcObjetivo = 0.0;
     }
 
+    void atualizarIntervalos() {
+        int nPivos = ligacao.size();
+        if (nPivos == 0) return;
+        int nHoras = ligacao[0].size();
+        
+        intervalo.assign(nPivos, std::vector<int>(nHoras, 0));
+        
+        for (int i = 0; i < nPivos; i++) {
+            for (int t = 0; t < nHoras; t++) {
+                if (ligacao[i][t] == 1) {
+                    // É o início de um intervalo se for a primeira hora (t == 0) 
+                    // ou se na hora anterior o pivô estava desligado (0)
+                    if (t == 0 || ligacao[i][t - 1] == 0) {
+                        intervalo[i][t] = 1;
+                    }
+                }
+            }
+        }
+    }
+
     // Método utilitário 
     void limpar(){
         for (auto& linha : ligacao) {
+            std::fill(linha.begin(), linha.end(), 0);
+        }
+        for (auto& linha : intervalo) {
             std::fill(linha.begin(), linha.end(), 0);
         }
         custoTotalEnergia = 0.0;
         viavel = true;
     }
 
-    void print(const Instancia& inst){
-        std::cout << std::endl<<"Eh viavel: "<<viavel<<std::endl<<"Custo Total de Energia: " << custoTotalEnergia << std::endl;
-        for(int i = 0; i < inst.getNPivos(); i++){
-            for(int j = 0; j < inst.getNHorasHorizonte(); j++){
+    void print()const{
+        int nPivos = ligacao.size();
+        if (nPivos == 0) return;
+        int nHoras = ligacao[0].size();
+
+        std::cout << std::endl<<"Eh viavel: "<<viavel<<
+            "\nCusto Total de Energia: " << custoTotalEnergia << 
+            "Valor FO: " << funcObjetivo << std::endl;
+        for(int i = 0; i < nPivos; i++){
+            for(int j = 0; j < nHoras; j++){
                 std::cout << ligacao[i][j]<<" ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "\n\nIntervalos de Irrigação\n";
+        for(int i = 0; i < nPivos; i++){
+            for(int j = 0; j < nHoras; j++){
+                std::cout << intervalo[i][j]<<" ";
             }
             std::cout << std::endl;
         }

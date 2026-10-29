@@ -1,6 +1,6 @@
-#include "../include/Construtor.hpp"
-#include "../include/Instancia.hpp"
-#include "../include/Solucao.hpp"
+#include "Construtor.hpp"
+#include "Instancia.hpp"
+#include "Solucao.hpp"
 #include <vector>
 #include <algorithm>
 
@@ -146,14 +146,11 @@ Solucao& Construtor::solucaoGulosa(){
 
 }
 double Construtor::calculaFO(const Solucao& s) const{
-    int n = this->inst->getNPivos();
-    int h = this->inst->getNHorasHorizonte();
+ 
     double custoEnergiaTotal = s.custoTotalEnergia;
     double custoLigacoes = calculaCustoEnergia(s.intervalo);
-    double gastoTotalDeAgua = 0.0;
-    for(int t = 0; t < h; t++)
-        gastoTotalDeAgua+= calculaGastoAguaHora(t, s.ligacao);
-    return custoEnergiaTotal + custoLigacoes + gastoTotalDeAgua;
+
+    return custoEnergiaTotal + custoLigacoes ;
 } 
 Solucao Construtor::solucaoGulosaMelhorada(){
     Solucao solPossivel(*inst);
@@ -186,7 +183,9 @@ Solucao Construtor::solucaoGulosaMelhorada(){
         }
     }
     solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel.ligacao);
+    solPossivel.atualizarIntervalos();
     solPossivel.funcObjetivo = calculaFO(solPossivel);
+    solPossivel.viavel = validaSolucao(solPossivel);
     return solPossivel;
 }
 
