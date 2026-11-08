@@ -1,8 +1,9 @@
-#include "Construtor.hpp"
-#include "Instancia.hpp"
-#include "Solucao.hpp"
+#include "../include/Construtor.hpp"
+#include "../include/Instancia.hpp"
+#include "../include/Solucao.hpp"
 #include <vector>
 #include <algorithm>
+#include <numeric>
 
 #define MAX_ITERACOES 100
 #define PENALIDADE_AGUA 200
@@ -154,38 +155,115 @@ double Construtor::calculaFO(const Solucao& s) const{
 } 
 Solucao Construtor::solucaoGulosaMelhorada(){
     Solucao solPossivel(*inst);
-    
-    int n = this->inst->getNPivos();
-    int h = this->inst->getNHorasHorizonte();
-    std::vector<double> gastoHora(h, 0.0);
-    
-    std::vector<std::pair<int, int>> pivos(n);
-    for(int i = 0 ; i < n; i++){
-        pivos[i].first = i;
-        pivos[i].second = inst->getDemandaHorasPivo(i);
-    }
-    std::sort(pivos.begin(), pivos.end(), [](const auto& a, const auto& b){
-        return a.second > b.second;
-    });
-    for (int i = 0; i < n; i++) {
-        int pivoId = pivos[i].first;
-        int demandaRestante = pivos[i].second;
-        double gastoPivo = inst->getGastoWChoraPivo(pivoId);
 
-        for (int j = 0; j < h && demandaRestante > 0; j++) {
-            // Verifica se cabe o pivô na hora j sem estourar o limite de água
-            if (gastoHora[j] + gastoPivo <= inst->getLimiteAguaHora()) {
-                solPossivel.ligacao[pivoId][j] = 1;
-                gastoHora[j] += gastoPivo;
-                // Decrementa a demanda
-                demandaRestante--; 
+    const int n = this->inst->getNPivos();
+    const int h = this->inst->getNHorasHorizonte();
+    const double limiteAgua = inst->getLimiteAguaHora();
+
+    std::vector<int> demandaRestante(n);
+    std::vector<double> gastoPivo(n);
+    for (int i = 0; i < n; i++) {
+        demandaRestante[i] = inst->getDemandaHorasPivo(i);
+        gastoPivo[i] = inst->getGastoWChoraPivo(i);
+    }
+
+    std::vector<int> ordem(n);
+    std::iota(ordem.begin(), ordem.end(), 0);
+
+    for (int j = 0; j < h; j++) {
+        // Reordena a cada hora pela maior demanda restante naquele momento
+        std::sort(ordem.begin(), ordem.end(), [&](int a, int b) {
+            if (demandaRestante[a] != demandaRestante[b])
+                return demandaRestante[a] > demandaRestante[b];
+            return a < b; // desempate determinístico
+        });
+
+        double gastoHora = 0.0;
+        for (int k = 0; k < n; k++) {
+            int p = ordem[k];
+            if (demandaRestante[p] <= 0) break; // ordenado: o resto também está zerado
+
+            if (gastoHora + gastoPivo[p] <= limiteAgua) {
+                solPossivel.ligacao[p][j] = 1;
+                gastoHora += gastoPivo[p];
+                demandaRestante[p]--;
             }
         }
     }
+
     solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel.ligacao);
     solPossivel.atualizarIntervalos();
     solPossivel.funcObjetivo = calculaFO(solPossivel);
     solPossivel.viavel = validaSolucao(solPossivel);
+    return solPossivel;
+
+}
+
+Solucao Construtor::solucaoGulosaParcial(float alpha){
+    if (alpha < 0.0f) alpha = 0.0f;
+    if (alpha > 1.0f) alpha = 1.0f;
+    Solucao solPossivel(*inst);
+
+    const int n = this->inst->getNPivos();
+    const int h = this->inst->getNHorasHorizonte();
+    const double limiteAgua = inst->getLimiteAguaHora();
+
+    std::vector<int> demandaRestante(n);
+    std::vector<double> gastoPivo(n);
+    for (int i = 0; i < n; i++) {
+        demandaRestante[i] = inst->getDemandaHorasPivo(i);
+        gastoPivo[i] = inst->getGastoWChoraPivo(i);
+    }
+
+    std::vector<int> ordem(n);
+    std::iota(ordem.begin(), ordem.end(), 0);
+
+    for (int j = 0; j < h; j++) {
+        std::vector<int> candidatos;
+        for (int i = 0; i < n; i++)
+            if (demandaRestante[i] > 0) candidatos.push_back(i);
+        //ordena os candidatos
+        std::sort(candidatos.begin(), candidatos.end(), [&](int a, int b) {
+            if (demandaRestante[a] != demandaRestante[b])
+                return demandaRestante[a] > demandaRestante[b];
+            return a < b;
+        });
+        //aloca os pivos dentro dos candidatos enquanto o vetor tiver candidatos disponiveis
+        double gastoHora = 0.0;
+    while (!candidatos.empty()) {
+        int maxD = demandaRestante[candidatos.front()];
+        int minD = demandaRestante[candidatos.back()];
+        double corte = maxD - alpha * (maxD - minD);
+
+        int tam = 0;
+        while (tam < (int)candidatos.size() &&
+            demandaRestante[candidatos[tam]] >= corte)
+            tam++;
+
+        // alpha = 0: sem sorteio, igual ao guloso 
+        if (alpha <= 0.0) tam = 1;
+
+        int pos = 0;
+        if (tam > 1) {
+            std::uniform_int_distribution<int> dist(0, tam - 1);
+            pos = dist(rng);
+        }
+        int p = candidatos[pos];
+
+        if (gastoHora + gastoPivo[p] <= limiteAgua) {
+            solPossivel.ligacao[p][j] = 1;
+            gastoHora += gastoPivo[p];
+            demandaRestante[p]--;
+        }
+        candidatos.erase(candidatos.begin() + pos);
+}
+    }
+
+    solPossivel.custoTotalEnergia = calculaCustoEnergia(solPossivel.ligacao);
+    solPossivel.atualizarIntervalos();
+    solPossivel.funcObjetivo = calculaFO(solPossivel);
+    solPossivel.viavel = validaSolucao(solPossivel);
+    
     return solPossivel;
 }
 
