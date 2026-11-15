@@ -1,59 +1,52 @@
-#ifndef INSTANCIA_H
-#define INSTANCIA_H
-#include <vector>
+#pragma once
+
 #include <string>
-#include <iostream>
-#include <fstream>
-#include <filesystem>
+#include <vector>
 
+struct Pivo {
+    int id = 0;
+    double aguaPhora = 0.0;
+    double potenciaKw = 0.0;
+    int horasNecessarias = 0;
 
-
-typedef struct pivo
-{
-    int id;
-    double aguaPhora;
-    double potenciaKw;
-
-    int horasNecessarias;
-
-    bool operator>(struct pivo& p2){
-        if(this->horasNecessarias > p2.horasNecessarias)
-            return true;
-        return false;
+    bool operator>(const Pivo& outro) const {
+        return horasNecessarias > outro.horasNecessarias;
     }
-}Pivo;
-
-
-class Instancia{
-    private:    
-        int nPivos;
-        double limiteAguaHora;
-        int nHorasHorizonte;
-        
-        std::vector<double> custoEnergiaHora; // Vetor de tamanho n_horas_horizonte
-        
-        std::vector<Pivo> pivos;
-
-        void carregarDeFicheiro(const std::string& caminhoArquivo);
-    public:
-        explicit Instancia(std::string& nomeArq);
-        void printPivo();
-        void imprimeInst();
-        static std::string formataNome(const char* argv);
-        int getNPivos() const;
-        double getLimiteAguaHora() const;
-        int getNHorasHorizonte() const;
-        int getGastoECPivo(int t);
-        double getGastoWChoraPivo(int i);
-        int getDemandaHorasPivo(int t);
-
-        const std::vector<double>& getCustoEnergiaHora() const;
-        const std::vector<Pivo>& getPivos();
-
-        // Métodos utilitários
-        double getCustoEnergiaNaHora(int t) const;
-        double getDemandaTotalAgua() const;
-
 };
 
-#endif
+// Dados do problema. Somente leitura depois de carregada.
+class Instancia {
+  private:
+    int nPivos = 0;
+    double limiteAguaHora = 0.0;
+    int nHorasHorizonte = 0;
+
+    std::vector<double> custoEnergiaHora;  // tamanho nHorasHorizonte
+    std::vector<Pivo> pivos;
+
+    void carregarDeFicheiro(const std::string& caminhoArquivo);
+
+  public:
+    // Lança std::runtime_error se o arquivo não abrir ou estiver malformado.
+    explicit Instancia(const std::string& nomeArq);
+
+    void imprimeInst() const;
+    static std::string formataNome(const char* argv);
+
+    int getNPivos() const;
+    double getLimiteAguaHora() const;
+    int getNHorasHorizonte() const;
+
+    double getGastoECPivo(int p) const;      // potência (kW). Antes retornava int.
+    double getGastoWChoraPivo(int p) const;  // água por hora
+    int getDemandaHorasPivo(int p) const;    // -1 se o índice for inválido
+
+    const std::vector<double>& getCustoEnergiaHora() const;
+    const std::vector<Pivo>& getPivos() const;
+
+    // Lança std::out_of_range se t for inválido.
+    double getCustoEnergiaNaHora(int t) const;
+
+    // Custo de energia de ligar o pivô p na hora t (potência × tarifa).
+    double custoEnergiaPivoHora(int p, int t) const;
+};

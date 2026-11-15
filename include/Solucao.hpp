@@ -1,87 +1,55 @@
-#ifndef SOLUCAO_H
-#define SOLUCAO_H
-#include "Instancia.hpp"
+#pragma once
 
+#include <vector>
 
-struct Solucao{
-    // Matriz de decisão: ligacao[p][t] = 1 se o pivo p liga na hora t
-    std::vector<std::vector<int>> ligacao; 
-    std::vector<std::vector<int>> intervalo;
+class Instancia;
 
-    double custoTotalEnergia;
-    double funcObjetivo;
-    bool viavel;
+class Solucao {
+  public:
+    explicit Solucao(const Instancia& inst);
 
-    // Construtor padrão
-    Solucao() : custoTotalEnergia(0.0), viavel(true), funcObjetivo(0.0){}
+    // ---- Consultas ----
+    int nPivos() const { return static_cast<int>(ligacao_.size()); }
+    int nHoras() const;
+    bool ligado(int p, int t) const { return ligacao_[p][t] == 1; }
+    const std::vector<std::vector<int>>& ligacao() const { return ligacao_; }
 
-    // Construtor que inicializa a matriz zerada com base na Instancia
-    Solucao(const Instancia& inst) {
-        int nPivos = inst.getNPivos();
-        int nHoras = inst.getNHorasHorizonte();
-        
-        ligacao.assign(nPivos, std::vector<int>(nHoras, 0));
-        intervalo.assign(nPivos, std::vector<int>(nHoras, 0));
+    // Início de intervalo: ligado em t e desligado em t-1 (ou t == 0).
+    bool inicioIntervalo(int p, int t) const;
 
-        custoTotalEnergia = 0.0;
-        viavel = true;
-        funcObjetivo = 0.0;
-    }
+    int horasLigadas(int p) const { return horasLigadas_[p]; }
+    int demandaRestante(int p) const;
+    double gastoAgua(int t) const { return gastoAgua_[t]; }
 
-    void atualizarIntervalos() {
-        int nPivos = ligacao.size();
-        if (nPivos == 0) return;
-        int nHoras = ligacao[0].size();
-        
-        intervalo.assign(nPivos, std::vector<int>(nHoras, 0));
-        
-        for (int i = 0; i < nPivos; i++) {
-            for (int t = 0; t < nHoras; t++) {
-                if (ligacao[i][t] == 1) {
-                    // É o início de um intervalo se for a primeira hora (t == 0) 
-                    // ou se na hora anterior o pivô estava desligado (0)
-                    if (t == 0 || ligacao[i][t - 1] == 0) {
-                        intervalo[i][t] = 1;
-                    }
-                }
-            }
-        }
-    }
+    double custoEnergia() const { return custoEnergia_; }
+    double custoIntervalos() const { return custoIntervalos_; }
+    double funcObjetivo() const { return custoEnergia_ + custoIntervalos_; }
+    bool viavel() const { return pivosDemandaErrada_ == 0 && horasComEstouro_ == 0; }
 
-    // Método utilitário 
-    void limpar(){
-        for (auto& linha : ligacao) {
-            std::fill(linha.begin(), linha.end(), 0);
-        }
-        for (auto& linha : intervalo) {
-            std::fill(linha.begin(), linha.end(), 0);
-        }
-        custoTotalEnergia = 0.0;
-        viavel = true;
-    }
+    // ---- Alterações ----
+    void ligar(int p, int t);      // idempotente
+    void desligar(int p, int t);   // idempotente
+    // Move uma hora ligada: desliga `de` e liga `para`. A demanda não muda.
+    void mover(int p, int de, int para);
 
-    void print()const{
-        int nPivos = ligacao.size();
-        if (nPivos == 0) return;
-        int nHoras = ligacao[0].size();
+    void limpar();
+    // Recalcula tudo do zero (via Avaliador). Elimina erro de arredondamento
+    // acumulado pelas atualizações incrementais.
+    void recalcular();
 
-        std::cout << std::endl<<"Eh viavel: "<<viavel<<
-            "\nCusto Total de Energia: " << custoTotalEnergia << 
-            "Valor FO: " << funcObjetivo << std::endl;
-        for(int i = 0; i < nPivos; i++){
-            for(int j = 0; j < nHoras; j++){
-                std::cout << ligacao[i][j]<<" ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << "\n\nIntervalos de Irrigação\n";
-        for(int i = 0; i < nPivos; i++){
-            for(int j = 0; j < nHoras; j++){
-                std::cout << intervalo[i][j]<<" ";
-            }
-            std::cout << std::endl;
-        }
-    }
+    void print() const;
+
+  private:
+    const Instancia* inst_;
+    std::vector<std::vector<int>> ligacao_;
+    std::vector<int> horasLigadas_;
+    std::vector<double> gastoAgua_;
+    double custoEnergia_ = 0.0;
+    double custoIntervalos_ = 0.0;
+    int pivosDemandaErrada_ = 0;  // pivôs com horasLigadas != demanda
+    int horasComEstouro_ = 0;     // horas acima do limite de água
+
+    void definir(int p, int t, bool valor);
+    double custoInicioJanela(int p, int t) const;
+    void recontarContadores();
 };
-
-#endif

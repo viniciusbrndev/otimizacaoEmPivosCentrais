@@ -1,52 +1,29 @@
-#ifndef CONSTRUTOR_H
-#define CONSTRUTOR_H
-#include "../include/Construtor.hpp"
-#include "../include/Instancia.hpp"
-#include "../include/Solucao.hpp"
+#pragma once
 
-#include <vector>
 #include <random>
-#include <chrono>
 
+#include "Instancia.hpp"
+#include "Solucao.hpp"
 
+// Heurísticas construtivas. Só constrói: avaliação ficou no Avaliador e a
+// busca local em BuscaLocal/Vizinhanca.
+class Construtor {
+  public:
+    // `rng` é compartilhado por referência (semente padrão mantida em main).
+    Construtor(const Instancia& inst, std::mt19937& rng);
 
-class Construtor{
-    private:
-        std::mt19937 rng;
-        Instancia* inst;
+    // Horas da mais barata para a mais cara; pivôs em ordem de índice.
+    Solucao solucaoGulosa() const;
 
-    public:
-        explicit Construtor(Instancia* inst);
-        //auxiliares
-        bool validaSolucao(Solucao& sol);
-        bool horasNecessaria(Solucao& sol)const;
-        int demandaRestantePivo(int pivo, const Solucao& so)const;
+    // Guloso por maior demanda restante (adaptativo). Equivale a
+    // solucaoGulosaParcial(0).
+    Solucao solucaoGulosaMelhorada();
 
-        double calculaCustoEnergia(const std::vector<std::vector<int>>& mat)const;
-        double calculaCustoEnergiaHora(int t, std::vector<std::vector<int>>& mat)const;
-        double calculaGastoAguaHora(int t, const std::vector<std::vector<int>>& mat) const;
-        
-        static bool estourouVazao(double usoDeAguaHr, double vMax);
+    // GRASP: RCL por limiar sobre a demanda restante, recalculada a cada
+    // sorteio. alpha = 0 -> guloso puro; alpha = 1 -> aleatório.
+    Solucao solucaoGulosaParcial(float alpha);
 
-        int randPos(int pivo, int horaAtual, const Solucao& sol);
-        bool randonSwap(int pivo, int t, Solucao& s);
-        double calculaFO(const Solucao& s) const;
-        //Construtores de Soluções
-        Solucao& solucaoGulosa();
-        Solucao solucaoGulosaMelhorada();
-        Solucao solucaoGulosaParcial(float prob);
-        Solucao metodoDeRefinamento(Solucao& solucao);
+  private:
+    const Instancia& inst_;
+    std::mt19937& rng_;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-#endif
