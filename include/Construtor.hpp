@@ -3,12 +3,16 @@
 #include "../include/Construtor.hpp"
 #include "../include/Instancia.hpp"
 #include "../include/Solucao.hpp"
+
 #include <vector>
+#include <random>
+#include <chrono>
 
 
 
 class Construtor{
     private:
+        std::mt19937 rng;
         Instancia* inst;
 
     public:
@@ -30,6 +34,7 @@ class Construtor{
         //Construtores de Soluções
         Solucao& solucaoGulosa();
         Solucao solucaoGulosaMelhorada();
+        Solucao solucaoGulosaParcial(float prob);
         Solucao metodoDeRefinamento(Solucao& solucao);
 };
 

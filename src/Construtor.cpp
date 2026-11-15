@@ -73,6 +73,18 @@ double Construtor::calculaCustoEnergia(const std::vector<std::vector<int>>& mat)
     }
     return soma;
 }
+double Construtor::calculaFO(const Solucao& s) const{
+ 
+    double custoEnergiaTotal = s.custoTotalEnergia;
+    double custoLigacoes = calculaCustoEnergia(s.intervalo);
+
+    return custoEnergiaTotal + custoLigacoes ;
+} 
+
+
+
+//Estruturas de vizinhança
+
 int Construtor::randPos(int pivo, int horaAtual, const Solucao& sol){
     int h = inst->getNHorasHorizonte();
     int estadoAtual = sol.ligacao[pivo][horaAtual]; // 1 se ligado, 0 se desligado
@@ -92,6 +104,7 @@ int Construtor::randPos(int pivo, int horaAtual, const Solucao& sol){
     int idxSorteado = rand() % candidatos.size();
     return candidatos[idxSorteado];
 }
+
 bool Construtor::randonSwap(int pivo, int t, Solucao& s){
     int k = randPos(pivo, t, s);
     if (k == -1) {
@@ -107,7 +120,12 @@ bool Construtor::randonSwap(int pivo, int t, Solucao& s){
     }
     return true;
 }
-//método visa apenas alocar os horários respeitando o limite de água
+
+
+
+
+
+//HEURÍSTICAS CONSTRUTIVAS
 Solucao& Construtor::solucaoGulosa(){
     static Solucao solPossivel(*inst);
     int n = this->inst->getNPivos();
@@ -146,13 +164,7 @@ Solucao& Construtor::solucaoGulosa(){
     return solPossivel;
 
 }
-double Construtor::calculaFO(const Solucao& s) const{
- 
-    double custoEnergiaTotal = s.custoTotalEnergia;
-    double custoLigacoes = calculaCustoEnergia(s.intervalo);
 
-    return custoEnergiaTotal + custoLigacoes ;
-} 
 Solucao Construtor::solucaoGulosaMelhorada(){
     Solucao solPossivel(*inst);
 
@@ -267,6 +279,12 @@ Solucao Construtor::solucaoGulosaParcial(float alpha){
     return solPossivel;
 }
 
+
+
+
+
+
+//META HEURÍSTICAS
 Solucao Construtor::metodoDeRefinamento(Solucao& solucao){
     Solucao solucaoAtual = solucao;
     Solucao solucaoAntiga = solucaoAtual;
