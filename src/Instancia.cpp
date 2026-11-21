@@ -21,8 +21,6 @@ void Instancia::carregarDeFicheiro(const std::string& caminhoArquivo) {
             "Cabecalho invalido (esperado: nPivos limiteAgua nHoras)");
     }
 
-    // Custo da água (WC): lido e descartado. Era lido como int, o que
-    // truncava decimais e desalinhava o resto da leitura.
     double tmp = 0.0;
     for (int i = 0; i < nHorasHorizonte; i++) {
         if (!(arquivo >> tmp)) {

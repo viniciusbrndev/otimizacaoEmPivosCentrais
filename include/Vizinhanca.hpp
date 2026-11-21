@@ -25,3 +25,10 @@ class ShiftAleatorio : public Vizinhanca {
   private:
     std::mt19937& rng_;
 };
+class BestImprovement : public Vizinhanca{
+  public:
+    explicit BestImprovement(){}
+    
+    bool tentar(Solucao& sol,  int pivo, int hora) override;
+    bool buscaMelhora(Solucao& sol, int pivo);
+};

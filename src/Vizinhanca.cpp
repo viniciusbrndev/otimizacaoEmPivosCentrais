@@ -1,8 +1,8 @@
 #include "Vizinhanca.hpp"
+#include "Avaliador.hpp"
 
 #include <vector>
-
-#include "Avaliador.hpp"
+#include <algorithm>
 
 int ShiftAleatorio::randPos(const Solucao& sol, int pivo, int horaAtual) {
     const int h = sol.nHoras();
@@ -39,4 +39,48 @@ bool ShiftAleatorio::tentar(Solucao& sol, int pivo, int hora) {
     }
     sol.mover(pivo, para, de);  // desfaz
     return false;
+}
+bool BestImprovement::buscaMelhora(Solucao& sol, int pivo) {
+    std::vector<int> candidatos;
+    std::vector<int> vazios;
+
+    for (int i = 0; i < sol.nHoras(); i++) {
+        if (sol.ligado(pivo, i)) {
+            candidatos.push_back(i);
+        } else {
+            vazios.push_back(i);
+        }
+    }
+
+    if (candidatos.empty() || vazios.empty())
+        return false;
+
+    double melhorCusto = sol.funcObjetivo();
+    int melhorDe = -1;
+    int melhorPara = -1;
+
+    // Reutiliza uma única cópia temporária 
+    Solucao vizinho = sol;
+
+    for (int de : candidatos) {
+        for (int para : vazios) {
+            vizinho = sol; 
+            vizinho.mover(pivo, de, para);
+
+            if (vizinho.viavel() && vizinho.funcObjetivo() < melhorCusto) {
+                melhorCusto = vizinho.funcObjetivo();
+                melhorDe = de;
+                melhorPara = para;
+            }
+        }
+    }
+
+    if (melhorDe == -1)
+        return false;
+
+    sol.mover(pivo, melhorDe, melhorPara);
+    return true;
+}
+bool BestImprovement::tentar(Solucao& sol,  int pivo, int hora){
+    return buscaMelhora(sol,  pivo);
 }
